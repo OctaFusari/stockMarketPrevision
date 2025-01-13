@@ -4,11 +4,14 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const App: React.FC = () => {
-    const [data, setData] = useState("");
+    let [data, setData] = useState("");
 
     useEffect(() => {
         axios.get("http://127.0.0.1:8000/")
-            .then(response => setData(response.data.message))
+            .then(response => {
+                console.log(response)
+                setData("")
+            })
             .catch(error => console.error(error));
     }, []);
 
