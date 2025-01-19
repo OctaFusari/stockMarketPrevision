@@ -23,7 +23,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from bs4 import BeautifulSoup
 import re
 import time
-
+from pydantic import BaseModel
 
 app = FastAPI()
 # Configura CORS
@@ -35,10 +35,16 @@ app.add_middleware(
     allow_headers=["*"],  # Permetti tutti gli header
 )
 
-@app.get("/")
-def read_root():
-    cik = "0001018724"  # amazon.
-    base_url = f'https://data.sec.gov/submissions/CIK{cik}.json'
+# Pydamic value per poter dare un formato aidati provenienti dal frontend
+class AziendaFE(BaseModel):
+    name: str
+
+
+@app.post("/")
+def read_root(azienda: AziendaFE):
+    #esempio 0001018724 -> amazon
+
+    base_url = f'https://data.sec.gov/submissions/CIK{azienda.name}.json'
     headers = {"User-Agent": "smp__back/1.0 (octavianfusari@gmail.com)"}
     response = requests.get(base_url, headers=headers)
     
@@ -69,7 +75,7 @@ def read_root():
                     text = re.sub(r'[^\w\s]', '', text)  # Rimuove simboli
 
                     #DATASET PRESO DA KAGGLE -> https://www.kaggle.com/datasets/aaron7sun/stocknews/data
-                    df2 = pd.read_csv(open("/home/octavian/platform/stockMarketPrevision/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
+                    df2 = pd.read_csv(open("/home/octavian/stockMarketPrediction/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
                     
                     # Unisci le colonne dei titoli in un unico testo
                     print("\nUnione le colonne relative ai titoli...")
@@ -101,7 +107,7 @@ def read_root():
                     print("\nAccuratezza SVM:", svc__OBJ['accuratezza'])
                     print("\nAccuratezza Random Forest:", rf__OBJ['accuratezza'])
 
-                    return{"message": rf__OBJ}
+                    return{"message": rf__OBJ, "azienda": azienda.name}
                 else:
                     raise Exception(f"Fallimento nel caricare il report: {report_response.status_code}")
     else:
@@ -168,6 +174,24 @@ def SVCmodel(text, vectorizer, X_train, y_train, X_test, y_test):
         "classificazione": classification_report(y_test, y_pred),
         "accuratezza": accuracy_score(y_test, y_pred),
     }
+
+
+#funzione per ottenere il cik delle aziende via il nome
+def fetchCIK(azienda):
+    searchUrl = f"https://efts.sec.gov/LATEST/company-search.json?keys={azienda}"
+    headers = {"User-Agent": "smp__back/1.0 (octavianfusari@gmail.com)"}
+
+    risppsta = requests.get(searchUrl, headers=headers)
+    print(risppsta)
+
+    cik = ""
+
+    if (risppsta.length > 0):
+        cik = risppsta[0]._source.cik
+    else:
+        cik = "Company not found."
+
+    return cik
 
 # Includi le rotte
 app.include_router(example.router)
