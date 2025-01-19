@@ -40,3 +40,37 @@
 .read-the-docs {
   color: #888;
 }
+
+.container{
+  padding: 2vh 5vh 2vh 5vh;
+  margin: 8vh 8vh 0 0vh;
+  border-radius: 1.5rem;
+  border-left: 5px solid #61dafbaa;
+}
+
+.grid__centrale{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: ". .";
+}
+
+input{
+  background-color: transparent;
+  border: none;
+  border-bottom: 1px solid #61dafbaa;
+}
+
+.spinner {
+  border: 8px solid #f3f3f3; /* Grigio chiaro */
+  border-top: 8px solid #3498db; /* Colore blu */
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

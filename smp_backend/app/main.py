@@ -13,11 +13,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from imblearn.over_sampling import SMOTE
+#from imblearn.over_sampling import SMOTE
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout
-from tensorflow.keras.optimizers import Adam
+#from tensorflow.keras.models import Sequential
+#from tensorflow.keras.layers import Dense, Dropout
+#from tensorflow.keras.optimizers import Adam
 
 from fastapi.middleware.cors import CORSMiddleware
 from bs4 import BeautifulSoup
@@ -36,15 +36,15 @@ app.add_middleware(
 )
 
 # Pydamic value per poter dare un formato aidati provenienti dal frontend
-class AziendaFE(BaseModel):
+class dataFE_model(BaseModel):
     name: str
-
+    modello: str
 
 @app.post("/")
-def read_root(azienda: AziendaFE):
+def read_root(dataFE: dataFE_model):
     #esempio 0001018724 -> amazon
 
-    base_url = f'https://data.sec.gov/submissions/CIK{azienda.name}.json'
+    base_url = f'https://data.sec.gov/submissions/CIK{dataFE.name}.json'
     headers = {"User-Agent": "smp__back/1.0 (octavianfusari@gmail.com)"}
     response = requests.get(base_url, headers=headers)
     
@@ -59,7 +59,7 @@ def read_root(azienda: AziendaFE):
                 document = filings["primaryDocument"][idx]
                 
                 # Costruisci l'URL per il documento
-                report_url = f"https://www.sec.gov/Archives/edgar/data/{cik.lstrip('0')}/{accession_number.replace('-', '')}/{document}"
+                report_url = f"https://www.sec.gov/Archives/edgar/data/{dataFE.name.lstrip('0')}/{accession_number.replace('-', '')}/{document}"
 
                 # Scarica il contenuto del file
                 time.sleep(1)  # Rispetta il limite di 10 richieste al secondo
@@ -75,7 +75,7 @@ def read_root(azienda: AziendaFE):
                     text = re.sub(r'[^\w\s]', '', text)  # Rimuove simboli
 
                     #DATASET PRESO DA KAGGLE -> https://www.kaggle.com/datasets/aaron7sun/stocknews/data
-                    df2 = pd.read_csv(open("/home/octavian/stockMarketPrediction/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
+                    df2 = pd.read_csv(open("/home/octavian/Documenti/UNI/stockMarketPrevision/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
                     
                     # Unisci le colonne dei titoli in un unico testo
                     print("\nUnione le colonne relative ai titoli...")
@@ -86,9 +86,6 @@ def read_root(azienda: AziendaFE):
                     
                     # Rinomina colonne per chiarezza
                     df2 = df2.rename(columns={"Label": "Sentiment"})
-                    
-                    """ print("\nDataset processato:")
-                    print(df2.head()) """
 
                     # Pre-processing: Vectorizing e appresentazione numerica
                     vectorizer = TfidfVectorizer(max_features=5000)
@@ -97,17 +94,16 @@ def read_root(azienda: AziendaFE):
 
                     # Divisione del dataset in training e test set
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-                    smote = SMOTE(random_state=42)
-                    X_train, y_train = smote.fit_resample(X_train, y_train)
-
+                    
                     #addestramento di sklearn e un modello di tipo randomforest e svm anzichè la rete neurale, uso entrambi(randomforest e svm) e poi vedo quale dei due ha il risultato migliore
                     svc__OBJ = SVCmodel(text, vectorizer,  X_train, y_train, X_test, y_test)
                     rf__OBJ = RandomForestModel(text, vectorizer,  X_train, y_train, X_test, y_test)
 
-                    print("\nAccuratezza SVM:", svc__OBJ['accuratezza'])
-                    print("\nAccuratezza Random Forest:", rf__OBJ['accuratezza'])
-
-                    return{"message": rf__OBJ, "azienda": azienda.name}
+                    if dataFE.modello == "svc__OBJ":
+                        return{"message": svc__OBJ}
+                    else:
+                        return{"message": rf__OBJ}
+                    
                 else:
                     raise Exception(f"Fallimento nel caricare il report: {report_response.status_code}")
     else:
@@ -177,8 +173,8 @@ def SVCmodel(text, vectorizer, X_train, y_train, X_test, y_test):
 
 
 #funzione per ottenere il cik delle aziende via il nome
-def fetchCIK(azienda):
-    searchUrl = f"https://efts.sec.gov/LATEST/company-search.json?keys={azienda}"
+def fetchCIK(dataFE):
+    searchUrl = f"https://efts.sec.gov/LATEST/company-search.json?keys={dataFE.name}"
     headers = {"User-Agent": "smp__back/1.0 (octavianfusari@gmail.com)"}
 
     risppsta = requests.get(searchUrl, headers=headers)
