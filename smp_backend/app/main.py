@@ -43,6 +43,9 @@ class dataFE_model(BaseModel):
 @app.post("/")
 def read_root(dataFE: dataFE_model):
     #esempio 0001018724 -> amazon
+    #esempio 0001326380 -> gamestop
+    #esempio 0000320193 -> apple
+    #esempio 0001318605 -> tesla
 
     base_url = f'https://data.sec.gov/submissions/CIK{dataFE.name}.json'
     headers = {"User-Agent": "smp__back/1.0 (octavianfusari@gmail.com)"}
