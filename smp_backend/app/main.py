@@ -75,7 +75,7 @@ def read_root(dataFE: dataFE_model):
                     text = re.sub(r'[^\w\s]', '', text)  # Rimuove simboli
 
                     #DATASET PRESO DA KAGGLE -> https://www.kaggle.com/datasets/aaron7sun/stocknews/data
-                    df2 = pd.read_csv(open("/home/octavian/Documenti/UNI/stockMarketPrevision/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
+                    df2 = pd.read_csv(open("/home/octavian/stockMarketPrediction/smp_backend/app/Combined_News_DJIA.csv", "r"), encoding='ISO-8859-1')
                     
                     # Unisci le colonne dei titoli in un unico testo
                     print("\nUnione le colonne relative ai titoli...")
